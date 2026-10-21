@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import {
   DndContext,
   DragOverlay,
   MouseSensor,
   TouchSensor,
   closestCenter,
+  pointerWithin,
   useDraggable,
   useDroppable,
   useSensor,
@@ -19,18 +20,25 @@ import type { Compra, Producto } from './api'
 
 const POLL_MS = 5000
 const LISTA = 'lista'
+const BOLSA = 'bolsa'
 
 const sortId = (p: Producto) => `l-${p.id}`
 const bagId = (p: Producto) => `b-${p.id}`
 const isTemp = (p: Producto) => p.id < 0
 
-// Los chips de la bolsa solo pueden soltarse en la lista; las tarjetas, entre ellas.
+// Color de la categoría (variables --cat-* en styles.css); los hijos lo heredan como --cat.
+const catStyle = (categoria: string) =>
+  ({ '--cat': `var(--cat-${categoria.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()}, var(--cat-otro))` }) as CSSProperties
+
+// Los chips de la bolsa solo pueden soltarse en la lista; las tarjetas, entre ellas o sobre la bolsa.
 const collision: CollisionDetection = (args) => {
-  const fromBag = String(args.active.id).startsWith('b-')
-  return closestCenter({
-    ...args,
-    droppableContainers: args.droppableContainers.filter((c) => fromBag || c.id !== LISTA),
-  })
+  const only = (keep: (id: string) => boolean) => args.droppableContainers.filter((c) => keep(String(c.id)))
+  if (String(args.active.id).startsWith('b-')) {
+    return closestCenter({ ...args, droppableContainers: only((id) => id !== BOLSA) })
+  }
+  const inBag = pointerWithin({ ...args, droppableContainers: only((id) => id === BOLSA) })
+  if (inBag.length > 0) return inBag
+  return closestCenter({ ...args, droppableContainers: only((id) => id !== LISTA && id !== BOLSA) })
 }
 
 function groupBy(items: Producto[], categorias: string[]) {
@@ -84,6 +92,67 @@ function ListaZone({ children }: { children: ReactNode }) {
   )
 }
 
+function BolsaZone({ highlight, children }: { highlight: boolean; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: BOLSA })
+  return (
+    <section ref={setNodeRef} className={`section bolsa${highlight ? ' target' : ''}${highlight && isOver ? ' over' : ''}`}>
+      {children}
+    </section>
+  )
+}
+
+function ShopMode({ groups, total, done, onToggle, onExit, onFinish }: {
+  groups: { categoria: string; items: Producto[] }[]
+  total: number
+  done: number
+  onToggle: (p: Producto) => void
+  onExit: () => void
+  onFinish: () => void
+}) {
+  return (
+    <div className="shop-mode">
+      <header className="shop-top">
+        <strong className="shop-progress" aria-live="polite">{done}/{total}</strong>
+        <button className="secondary" onClick={onExit}>Salir</button>
+      </header>
+      <div className="shop-body">
+        {groups.length === 0 && <p className="muted">La lista está vacía.</p>}
+        {groups.map((g) => (
+          <div key={g.categoria} className="group" style={catStyle(g.categoria)}>
+            <h3>{g.categoria}</h3>
+            <ul className="items">
+              {g.items.map((p) => (
+                <li key={p.id}>
+                  <button className={`shop-card${p.comprado ? ' done' : ''}`} aria-pressed={p.comprado} onClick={() => onToggle(p)}>
+                    {p.nombre}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <footer className="shop-bottom">
+        <button onClick={onFinish}>Compra terminada</button>
+      </footer>
+    </div>
+  )
+}
+
+function FinishDialog({ count, onClose, onMove, onDelete }: { count: number; onClose: () => void; onMove: () => void; onDelete: () => void }) {
+  return (
+    <div className="overlay shop-dialog" onClick={onClose}>
+      <div className="dialog card" role="dialog" aria-modal="true" aria-labelledby="fin-title" onClick={(e) => e.stopPropagation()}>
+        <h3 id="fin-title">Compra terminada</h3>
+        <p>{count === 0 ? 'No hay productos tachados.' : `¿Qué hacemos con los ${count} productos tachados?`}</p>
+        <button onClick={onMove} disabled={count === 0}>Mover a la bolsa</button>
+        <button className="danger" onClick={onDelete} disabled={count === 0}>Eliminar</button>
+        <button className="secondary" onClick={onClose}>Cancelar</button>
+      </div>
+    </div>
+  )
+}
+
 function Dialog({ p, onClose, onReturn, onDelete }: { p: Producto; onClose: () => void; onReturn: () => void; onDelete: () => void }) {
   return (
     <div className="overlay" onClick={onClose}>
@@ -116,7 +185,7 @@ function Sheet({ categorias, onClose, onCreate }: { categorias: string[]; onClos
         <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre" maxLength={60} autoFocus required />
         <div className="chips" role="radiogroup" aria-label="Categoría">
           {categorias.map((c) => (
-            <button type="button" key={c} role="radio" aria-checked={c === categoria} className={`chip pick${c === categoria ? ' on' : ''}`} onClick={() => setCategoria(c)}>
+            <button type="button" key={c} role="radio" aria-checked={c === categoria} className={`chip pick${c === categoria ? ' on' : ''}`} style={catStyle(c)} onClick={() => setCategoria(c)}>
               {c}
             </button>
           ))}
@@ -137,6 +206,9 @@ export default function Shopping() {
   const [confirm, setConfirm] = useState<Producto | null>(null)
   const [sheet, setSheet] = useState(false)
   const [active, setActive] = useState<Producto | null>(null)
+  const [dragList, setDragList] = useState(false)
+  const [shopping, setShopping] = useState(false)
+  const [finish, setFinish] = useState(false)
 
   // Evita que un refresco pise cambios optimistas en vuelo o un arrastre en curso.
   const seq = useRef(0)
@@ -209,8 +281,48 @@ export default function Shopping() {
       () => api.borrarProducto(p.id),
     )
 
+  const moveToBag = (p: Producto) => {
+    if (isTemp(p)) return
+    mutate(
+      (d) => ({
+        ...d,
+        lista: d.lista.filter((x) => x.id !== p.id),
+        bolsa: d.bolsa.some((x) => x.id === p.id) ? d.bolsa : [...d.bolsa, { ...p, en_bolsa: true, posicion: null, comprado: false }],
+      }),
+      () => api.aBolsa(p.id),
+    )
+  }
+
+  const toggleComprado = (p: Producto) => {
+    if (isTemp(p)) return
+    const comprado = !p.comprado
+    mutate(
+      (d) => ({ ...d, lista: d.lista.map((x) => (x.id === p.id ? { ...x, comprado } : x)) }),
+      () => api.marcarComprado(p.id, comprado),
+    )
+  }
+
+  const finishShopping = (accion: 'bolsa' | 'eliminar') => {
+    mutate(
+      (d) => {
+        const hechos = d.lista.filter((x) => x.comprado)
+        return {
+          ...d,
+          lista: d.lista.filter((x) => !x.comprado),
+          bolsa:
+            accion === 'bolsa'
+              ? [...d.bolsa.filter((b) => !hechos.some((h) => h.id === b.id)), ...hechos.map((h) => ({ ...h, en_bolsa: true, posicion: null, comprado: false }))]
+              : d.bolsa.filter((b) => !hechos.some((h) => h.id === b.id)),
+        }
+      },
+      () => api.terminarCompra(accion),
+    )
+    setFinish(false)
+    setShopping(false)
+  }
+
   const create = (nombre: string, categoria: string, enBolsa: boolean) => {
-    const temp: Producto = { id: -Date.now(), nombre, categoria, en_bolsa: enBolsa, posicion: null }
+    const temp: Producto = { id: -Date.now(), nombre, categoria, en_bolsa: enBolsa, posicion: null, comprado: false }
     mutate(
       (d) => ({ ...d, bolsa: enBolsa ? [...d.bolsa, temp] : d.bolsa, lista: [...d.lista, { ...temp, posicion: d.lista.length }] }),
       () => api.crearProducto({ nombre, categoria, en_lista: true, en_bolsa: enBolsa }),
@@ -222,14 +334,22 @@ export default function Shopping() {
     dragging.current = true
     const id = String(e.active.id)
     if (id.startsWith('b-')) setActive(data?.bolsa.find((p) => bagId(p) === id) ?? null)
+    else setDragList(true)
   }
 
   function onDragEnd(e: DragEndEvent) {
     dragging.current = false
     setActive(null)
+    setDragList(false)
     if (!data || !e.over) return
     const from = String(e.active.id)
     const over = String(e.over.id)
+
+    if (over === BOLSA) {
+      const p = data.lista.find((x) => sortId(x) === from)
+      if (p) moveToBag(p)
+      return
+    }
 
     if (from.startsWith('b-')) {
       const p = data.bolsa.find((x) => bagId(x) === from)
@@ -256,6 +376,7 @@ export default function Shopping() {
   const onDragCancel = () => {
     dragging.current = false
     setActive(null)
+    setDragList(false)
   }
 
   if (!data) {
@@ -271,16 +392,30 @@ export default function Shopping() {
   const listaGroups = groupBy(data.lista, data.categorias)
   const bolsaGroups = groupBy(data.bolsa, data.categorias)
 
+  if (shopping) {
+    const hechos = data.lista.filter((p) => p.comprado).length
+    return (
+      <>
+        {error && <p className="error shop-error" role="alert">{error}</p>}
+        <ShopMode groups={listaGroups} total={data.lista.length} done={hechos} onToggle={toggleComprado} onExit={() => setShopping(false)} onFinish={() => setFinish(true)} />
+        {finish && <FinishDialog count={hechos} onClose={() => setFinish(false)} onMove={() => finishShopping('bolsa')} onDelete={() => finishShopping('eliminar')} />}
+      </>
+    )
+  }
+
   return (
     <>
       {error && <p className="error" role="alert">{error}</p>}
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
         <section className="section">
-          <h2>Lista</h2>
+          <div className="section-head">
+            <h2>Lista</h2>
+            <button className="shop-go" disabled={data.lista.length === 0} onClick={() => setShopping(true)}>Ir a comprar</button>
+          </div>
           <ListaZone>
             {listaGroups.length === 0 && <p className="muted">Nada que comprar. Toca un producto de la bolsa o pulsa +.</p>}
             {listaGroups.map((g) => (
-              <div key={g.categoria} className="group">
+              <div key={g.categoria} className="group" style={catStyle(g.categoria)}>
                 <h3>{g.categoria}</h3>
                 <SortableContext items={g.items.map(sortId)} strategy={verticalListSortingStrategy}>
                   <ul className="items">
@@ -294,11 +429,11 @@ export default function Shopping() {
           </ListaZone>
         </section>
 
-        <section className="section bolsa">
+        <BolsaZone highlight={dragList}>
           <h2>Bolsa</h2>
           {bolsaGroups.length === 0 && <p className="muted">Aquí van los productos frecuentes. Crea uno con + y marca «Guardar en la bolsa».</p>}
           {bolsaGroups.map((g) => (
-            <div key={g.categoria} className="group">
+            <div key={g.categoria} className="group" style={catStyle(g.categoria)}>
               <h3>{g.categoria}</h3>
               <div className="chips">
                 {g.items.map((p) => (
@@ -307,9 +442,9 @@ export default function Shopping() {
               </div>
             </div>
           ))}
-        </section>
+        </BolsaZone>
 
-        <DragOverlay>{active ? <span className="chip overlay-chip">{active.nombre}</span> : null}</DragOverlay>
+        <DragOverlay>{active ? <span className="chip overlay-chip" style={catStyle(active.categoria)}>{active.nombre}</span> : null}</DragOverlay>
       </DndContext>
 
       <button className="fab" aria-label="Nuevo producto" onClick={() => setSheet(true)}>+</button>

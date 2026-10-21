@@ -11,6 +11,16 @@
   --border: #ECECE8;
   --danger: #D92D20;
 
+  /* Colores pastel por categoría (se usan vía --cat en cada grupo) */
+  --cat-proteina: #F6B8B0;
+  --cat-verduras: #B5E0B0;
+  --cat-frutas: #FBD3A0;
+  --cat-hidratos: #F5E3A0;
+  --cat-despensa: #D9C4A8;
+  --cat-limpieza: #A9D8EE;
+  --cat-higiene: #CDBCEB;
+  --cat-otro: #D3D3D8;
+
   --radius: 1rem;
   --radius-sm: .75rem;
   --shadow: 0 2px 12px rgba(40, 30, 30, .07);
@@ -143,9 +153,33 @@ button.secondary { background: var(--surface); color: var(--fg); border-color: v
 .muted { color: var(--muted); }
 .app-main > .section + .section { margin-top: var(--space-4); }
 .app-main > .error { margin-bottom: var(--space-2); }
-.group { display: grid; gap: var(--space-1); }
+.group {
+  --cat: var(--cat-otro);
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cat) 22%, var(--surface));
+}
 .group + .group { margin-top: var(--space-3); }
-.group h3 { margin: 0; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.group h3 {
+  margin: 0;
+  padding: .35rem var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--cat);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.shop-go { min-height: 2.5rem; background: var(--mint-strong); border-color: var(--mint-strong); }
+.shop-go:active { background: #2F7556; }
+.bolsa { border: 2px dashed transparent; border-radius: var(--radius); padding: var(--space-1); margin: calc(var(--space-1) * -1); transition: background .15s, border-color .15s; }
+.app-main > .section.bolsa { margin-top: var(--space-3); }
+.bolsa.target { border-color: var(--mint-strong); background: color-mix(in srgb, var(--mint) 20%, transparent); }
+.bolsa.target.over { background: color-mix(in srgb, var(--mint) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint-strong) 35%, transparent); }
 .lista-zone { display: grid; padding: var(--space-1); margin: calc(var(--space-1) * -1); border-radius: var(--radius); border: 2px dashed transparent; min-height: 3rem; }
 .lista-zone.over { border-color: var(--mint-strong); background: color-mix(in srgb, var(--mint) 25%, transparent); }
 
@@ -159,6 +193,7 @@ button.secondary { background: var(--surface); color: var(--fg); border-color: v
   padding: 0 var(--space-1) 0 var(--space-3);
   background: var(--surface);
   border-radius: var(--radius-sm);
+  border-left: .4rem solid var(--cat, var(--border));
   box-shadow: var(--shadow);
   touch-action: manipulation;
   user-select: none;
@@ -176,7 +211,7 @@ button.secondary { background: var(--surface); color: var(--fg); border-color: v
   padding: 0 var(--space-3);
   border-radius: 999px;
   background: var(--surface);
-  border-color: var(--border);
+  border: 2px solid var(--cat, var(--border));
   color: var(--fg);
   font-weight: 500;
   touch-action: manipulation;
@@ -188,8 +223,54 @@ button.secondary { background: var(--surface); color: var(--fg); border-color: v
 .chip.dim { opacity: .4; cursor: default; }
 .chip.dim:active { background: var(--surface); }
 .chip.dragging { opacity: .3; }
-.chip.overlay-chip { display: inline-flex; align-items: center; background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow); }
-.chip.pick.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+.chip.overlay-chip { display: inline-flex; align-items: center; background: var(--cat); color: var(--fg); box-shadow: var(--shadow); }
+.chip.pick.on { background: var(--cat, var(--accent-soft)); font-weight: 700; }
+
+/* Modo compra: pantalla completa */
+.shop-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--bg);
+}
+.shop-top, .shop-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: calc(var(--space-2) + env(safe-area-inset-top)) calc(var(--space-3) + env(safe-area-inset-right)) var(--space-2) calc(var(--space-3) + env(safe-area-inset-left));
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.shop-bottom {
+  padding: var(--space-2) calc(var(--space-3) + env(safe-area-inset-right)) calc(var(--space-2) + env(safe-area-inset-bottom)) calc(var(--space-3) + env(safe-area-inset-left));
+  border-bottom: 0;
+  border-top: 1px solid var(--border);
+}
+.shop-bottom button { flex: 1; min-height: 3.5rem; font-size: 1.1rem; }
+.shop-progress { font-size: 1.5rem; }
+.shop-body { overflow-y: auto; padding: var(--space-3) calc(var(--space-3) + env(safe-area-inset-right)) var(--space-3) calc(var(--space-3) + env(safe-area-inset-left)); }
+.shop-card {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-left: .6rem solid var(--cat);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.shop-card:active { background: color-mix(in srgb, var(--cat) 30%, var(--surface)); }
+.shop-card.done { opacity: .5; text-decoration: line-through; background: color-mix(in srgb, var(--cat) 15%, var(--surface)); }
+.shop-error { position: fixed; z-index: 40; top: 0; left: 0; right: 0; padding: var(--space-1) var(--space-3); background: var(--surface); }
+.shop-dialog { z-index: 50; }
 
 .fab {
   position: fixed;
