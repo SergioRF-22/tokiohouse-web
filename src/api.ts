@@ -64,3 +64,57 @@ export const ordenarTareas = (ids: number[]) =>
   request<unknown>('/tasks/orden', { method: 'PUT', body: JSON.stringify({ ids }) })
 
 export const borrarTarea = (id: number) => request<unknown>(`/tasks/${id}`, { method: 'DELETE' })
+
+export type Tipo = 'ingreso' | 'gasto'
+export type Categoria = { id: number; tipo: Tipo; nombre: string }
+export type Movimiento = {
+  id: number
+  tipo: Tipo
+  importe_centimos: number
+  categoria_id: number
+  categoria: string
+  fecha: string
+  nota: string | null
+  gasto_fijo_id: number | null
+}
+export type NuevoMovimiento = { tipo: Tipo; importe_centimos: number; categoria_id: number; fecha: string; nota?: string }
+export type GastoFijo = {
+  id: number
+  nombre: string
+  importe_centimos: number
+  categoria_id: number
+  categoria: string
+  dia: number
+  mes_inicio: string
+}
+export type NuevoGastoFijo = { nombre: string; importe_centimos: number; categoria_id: number; dia: number; mes_inicio: string }
+export type Resumen = {
+  desde: string
+  hasta: string
+  por_mes: { mes: string; ingresos: number; gastos: number }[]
+  por_categoria: { tipo: Tipo; categoria_id: number; categoria: string; total: number }[]
+  gastos_por_dia: { fecha: string; total: number }[]
+}
+
+export const getCategorias = () => request<{ categorias: Categoria[] }>('/finanzas/categorias')
+
+export const crearCategoria = (tipo: Tipo, nombre: string) =>
+  request<Categoria>('/finanzas/categorias', { method: 'POST', body: JSON.stringify({ tipo, nombre }) })
+
+export const getMovimientos = (desde: string, hasta: string) =>
+  request<{ movimientos: Movimiento[] }>(`/finanzas/movimientos?desde=${desde}&hasta=${hasta}`)
+
+export const crearMovimiento = (m: NuevoMovimiento) =>
+  request<Movimiento>('/finanzas/movimientos', { method: 'POST', body: JSON.stringify(m) })
+
+export const borrarMovimiento = (id: number) => request<unknown>(`/finanzas/movimientos/${id}`, { method: 'DELETE' })
+
+export const getGastosFijos = () => request<{ gastos_fijos: GastoFijo[] }>('/finanzas/gastos-fijos')
+
+export const crearGastoFijo = (g: NuevoGastoFijo) =>
+  request<GastoFijo>('/finanzas/gastos-fijos', { method: 'POST', body: JSON.stringify(g) })
+
+export const quitarGastoFijo = (id: number) => request<unknown>(`/finanzas/gastos-fijos/${id}/baja`, { method: 'POST' })
+
+export const getResumen = (desde: string, hasta: string) =>
+  request<Resumen>(`/finanzas/resumen?desde=${desde}&hasta=${hasta}`)

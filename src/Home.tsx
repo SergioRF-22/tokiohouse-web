@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import * as api from './api'
 import type { User } from './api'
+import Finanzas from './Finanzas'
 import Shopping from './Shopping'
 import Tasks from './Tasks'
 
@@ -37,7 +38,7 @@ const TABS: Tab[] = [
   {
     id: 'mias',
     label: 'Mis finanzas',
-    soon: true,
+    soon: false,
     text: 'Tus finanzas personales.',
     icon: svg(<><rect x="3.5" y="6" width="17" height="13" rx="3" /><path d="M3.5 10h17" /><circle cx="16.5" cy="14.5" r="1" /></>),
   },
@@ -71,6 +72,8 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
           <Shopping />
         ) : tab.id === 'tareas' ? (
           <Tasks username={user.username} />
+        ) : tab.id === 'mias' ? (
+          <Finanzas />
         ) : (
           <section className="section">
             <h2>{tab.label}</h2>

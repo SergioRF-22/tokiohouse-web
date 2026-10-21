@@ -314,3 +314,41 @@ button.danger { background: var(--danger); border-color: var(--danger); }
 .add-row button { flex: none; width: var(--tap); padding: 0; font-size: 1.5rem; line-height: 1; }
 .item-text { display: grid; gap: .1rem; padding: .5rem 0; min-width: 0; }
 .item-by { font-size: .75rem; color: var(--muted); }
+
+/* Mis finanzas */
+:root {
+  --gasto: #C9514A;
+  --gasto-soft: #F6B8B0;
+  --ingreso: #3F8F6B;
+  --ingreso-soft: #BFE3D0;
+}
+.fin-charts-slot { margin-top: var(--space-4); }
+.fin-charts-slot:empty { display: none; }
+.fin-charts-slot + .section { margin-top: var(--space-4); }
+.month-nav { display: flex; align-items: center; justify-content: space-between; }
+.month-nav .icon-btn { width: var(--tap); min-height: var(--tap); font-size: 1.5rem; }
+.month-label { font-size: 1.1rem; text-transform: capitalize; }
+.totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); padding: var(--space-3); text-align: center; }
+.totals div { display: grid; gap: .15rem; min-width: 0; }
+.totals small { color: var(--muted); font-size: .75rem; }
+.totals strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.gasto { color: var(--gasto); }
+.ingreso { color: var(--ingreso); }
+.big-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.big { min-height: 3.5rem; font-size: 1.1rem; }
+.big.gasto-btn { background: var(--gasto); border-color: var(--gasto); color: #fff; }
+.big.ingreso-btn { background: var(--ingreso); border-color: var(--ingreso); color: #fff; }
+.day { display: grid; gap: var(--space-1); }
+.day + .day { margin-top: var(--space-2); }
+.day h3 { margin: 0; font-size: .8rem; color: var(--muted); text-transform: capitalize; }
+.item.mov.gasto { --cat: var(--gasto-soft); }
+.item.mov.ingreso { --cat: var(--ingreso-soft); }
+.item.mov .item-text { flex: 1; }
+.amt { flex: none; white-space: nowrap; }
+.fijo-icon { color: var(--muted); }
+.quitar { flex: none; min-height: 2.25rem; padding: 0 var(--space-2); margin-right: var(--space-1); }
+.chip.new { border-style: dashed; color: var(--muted); }
+.sheet { max-height: 92dvh; overflow-y: auto; }
+.sheet input.amount { font-size: 1.5rem; font-weight: 600; }
+.sheet input[type='date'] { width: 100%; }
+.field { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted); }
