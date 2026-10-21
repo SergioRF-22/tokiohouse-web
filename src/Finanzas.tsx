@@ -6,24 +6,24 @@ import TrabajoPanel from './TrabajoPanel'
 import { lastDay, mesLabel, shiftMes, today } from './fechas'
 
 const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })
-const eur = (centimos: number) => euros.format(centimos / 100)
+export const eur = (centimos: number) => euros.format(centimos / 100)
 
-const diaLabel = (fecha: string) =>
+export const diaLabel =(fecha: string) =>
   new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(Number(fecha.slice(0, 4)), Number(fecha.slice(5, 7)) - 1, Number(fecha.slice(8, 10))),
   )
 
 // "12,5" o "12.50" -> 1250 céntimos; null si no es un importe válido (> 0, máx. 2 decimales).
-function parseImporte(s: string): number | null {
+export function parseImporte(s: string): number | null {
   const t = s.trim().replace(',', '.')
   if (!/^\d+(\.\d{1,2})?$/.test(t)) return null
   const c = Math.round(Number(t) * 100)
   return c > 0 && Number.isSafeInteger(c) ? c : null
 }
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error')
+export const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Error')
 
-function Confirm({ title, text, action, onClose, onOk }: { title: string; text: string; action: string; onClose: () => void; onOk: () => void }) {
+export function Confirm({ title, text, action, onClose, onOk }: { title: string; text: string; action: string; onClose: () => void; onOk: () => void }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="dialog card" role="dialog" aria-modal="true" aria-labelledby="conf-title" onClick={(e) => e.stopPropagation()}>
@@ -46,7 +46,7 @@ function TrabajoSwitch({ value, onChange }: { value: boolean; onChange: (v: bool
 }
 
 // Chips de las categorías de un tipo + "+ Nueva" para crearla en línea.
-function CatPicker({ tipo, categorias, value, onPick, onCreate }: {
+export function CatPicker({ tipo, categorias, value, onPick, onCreate }: {
   tipo: Tipo
   categorias: Categoria[]
   value: number | null

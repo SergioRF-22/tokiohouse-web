@@ -120,3 +120,32 @@ export const quitarGastoFijo = (id: number) => request<unknown>(`/finanzas/gasto
 
 export const getResumen = (desde: string, hasta: string) =>
   request<Resumen>(`/finanzas/resumen?desde=${desde}&hasta=${hasta}`)
+
+export type MovimientoCasa = Omit<Movimiento, 'trabajo'> & { usuario: string | null }
+export type GastoFijoCasa = Omit<GastoFijo, 'trabajo'>
+export type ResumenCasa = { saldo_inicial_centimos: number; saldo_actual: number; gasto_medio_mensual: number }
+
+export const getCasaCategorias = () => request<{ categorias: Categoria[] }>('/casa/categorias')
+
+export const crearCasaCategoria = (tipo: Tipo, nombre: string) =>
+  request<Categoria>('/casa/categorias', { method: 'POST', body: JSON.stringify({ tipo, nombre }) })
+
+export const getCasaMovimientos = (mes: string) =>
+  request<{ movimientos: MovimientoCasa[] }>(`/casa/movimientos?mes=${mes}`)
+
+export const crearCasaMovimiento = (m: Omit<NuevoMovimiento, 'trabajo'>) =>
+  request<MovimientoCasa>('/casa/movimientos', { method: 'POST', body: JSON.stringify(m) })
+
+export const borrarCasaMovimiento = (id: number) => request<unknown>(`/casa/movimientos/${id}`, { method: 'DELETE' })
+
+export const getCasaGastosFijos = () => request<{ gastos_fijos: GastoFijoCasa[] }>('/casa/gastos-fijos')
+
+export const crearCasaGastoFijo = (g: Omit<NuevoGastoFijo, 'trabajo'>) =>
+  request<GastoFijoCasa>('/casa/gastos-fijos', { method: 'POST', body: JSON.stringify(g) })
+
+export const quitarCasaGastoFijo = (id: number) => request<unknown>(`/casa/gastos-fijos/${id}/baja`, { method: 'POST' })
+
+export const getCasaResumen = () => request<ResumenCasa>('/casa/resumen')
+
+export const setCasaSaldoInicial = (saldo_inicial_centimos: number) =>
+  request<{ saldo_inicial_centimos: number }>('/casa/saldo-inicial', { method: 'PUT', body: JSON.stringify({ saldo_inicial_centimos }) })

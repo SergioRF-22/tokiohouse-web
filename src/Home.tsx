@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import * as api from './api'
 import type { User } from './api'
+import Casa from './Casa'
 import Finanzas from './Finanzas'
 import Shopping from './Shopping'
 import Tasks from './Tasks'
@@ -30,8 +31,8 @@ const TABS: Tab[] = [
   },
   {
     id: 'casa',
-    label: 'Finanzas casa',
-    soon: true,
+    label: 'Casa',
+    soon: false,
     text: 'Los gastos compartidos de la casa.',
     icon: svg(<><path d="M4 11 12 4l8 7" /><path d="M6 10v9h12v-9" /><path d="M10 19v-5h4v5" /></>),
   },
@@ -68,6 +69,8 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
           <Shopping />
         ) : tab.id === 'tareas' ? (
           <Tasks username={user.username} />
+        ) : tab.id === 'casa' ? (
+          <Casa />
         ) : tab.id === 'mias' ? (
           <Finanzas />
         ) : (
