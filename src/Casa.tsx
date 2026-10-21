@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import * as api from './api'
 import type { Categoria, GastoFijoCasa, MovimientoCasa, Tipo } from './api'
 import { CatPicker, Confirm, diaLabel, eur, errMsg, parseImporte } from './Finanzas'
-import { mesLabel, shiftMes, today } from './fechas'
+import { mesCorto, mesLabel, shiftMes, today } from './fechas'
+import { BarChart, Donut, LineChart, fmtEur, type BarGroup } from './charts'
+import { Empty, Fold, Kpi, catColor } from './FinPanel'
 
 type CreateCat = (tipo: Tipo, nombre: string) => Promise<Categoria>
 
@@ -134,6 +136,116 @@ function SaldoSheet({ actual, onClose, onSave }: { actual: number; onClose: () =
         <button disabled={busy}>Guardar</button>
       </form>
     </div>
+  )
+}
+
+const C_ING_BAR = '#9ED6B9'
+const C_GAS_BAR = '#F29B90'
+const C_PERSONAS = ['#9EC5E8', '#E8B4D6', '#C9B8E8', '#E8D49E']
+
+function CasaCharts({ refresh }: { refresh: unknown }) {
+  const [anio, setAnio] = useState(() => today().slice(0, 4))
+  const [r, setR] = useState<api.ResumenCasa | null>(null)
+  const seq = useRef(0)
+
+  useEffect(() => {
+    // `refresh` cambia cada vez que Casa recarga (alta/baja de movimientos).
+    const s = ++seq.current
+    api.getCasaResumen(anio).then((x) => s === seq.current && setR(x)).catch(() => {})
+  }, [anio, refresh])
+
+  const cambiar = (d: number) => {
+    setR(null)
+    setAnio(String(Number(anio) + d))
+  }
+
+  const personas = (r?.aportaciones_anio ?? []).map((p, i) => ({
+    id: String(p.usuario_id ?? 'x'),
+    label: p.usuario ?? 'Sin usuario',
+    color: C_PERSONAS[i % C_PERSONAS.length],
+    total: p.total,
+  }))
+  const totalAport = personas.reduce((a, p) => a + p.total, 0)
+  const aportGroups: BarGroup[] = (r?.por_mes ?? []).map((m) => ({
+    label: mesCorto(m.mes).slice(0, 3),
+    title: mesLabel(m.mes),
+    bars: personas.map((p) => ({
+      id: p.id,
+      value: r!.aportaciones.find((a) => String(a.usuario_id ?? 'x') === p.id && a.mes === m.mes)?.total ?? 0,
+    })),
+  }))
+  const hayMov = !!r && r.por_mes.some((m) => m.ingresos + m.gastos > 0)
+
+  return (
+    <section className="section">
+      <h2>Gráficas</h2>
+      <div className="month-nav">
+        <button className="icon-btn" aria-label="Año anterior" onClick={() => cambiar(-1)}>‹</button>
+        <strong className="month-label" aria-live="polite">{anio}</strong>
+        <button className="icon-btn" aria-label="Año siguiente" onClick={() => cambiar(1)}>›</button>
+      </div>
+      {!r ? (
+        <p className="muted">Cargando…</p>
+      ) : (
+        <div className="fin-panel">
+          <div className="kpis" role="list">
+            <Kpi label={`Gasto ${anio}`} value={fmtEur(r.gasto_anio)} />
+            <Kpi label="Fijos al mes" value={fmtEur(r.fijos_mensual_total)} />
+            <Kpi label="Colchón" value={r.meses_colchon === null ? '—' : `${String(r.meses_colchon).replace('.', ',')} meses`} tone={r.meses_colchon !== null && r.meses_colchon < 0 ? 'bad' : undefined} />
+            <Kpi label="Aportación sugerida" value={fmtEur(r.aportacion_sugerida_persona)} sub="por persona al mes" />
+          </div>
+
+          <Fold title="Ingresos y gastos por mes">
+            {hayMov ? (
+              <BarChart
+                label={`Ingresos y gastos por mes de ${anio}`}
+                groups={r.por_mes.map((m) => ({ label: mesCorto(m.mes).slice(0, 3), title: mesLabel(m.mes), bars: [{ id: 'ing', value: m.ingresos }, { id: 'gas', value: m.gastos }] }))}
+                bars={[{ id: 'ing', label: 'Ingresos', color: C_ING_BAR }, { id: 'gas', label: 'Gastos', color: C_GAS_BAR }]}
+              />
+            ) : (
+              <Empty>Sin movimientos en {anio}.</Empty>
+            )}
+          </Fold>
+
+          <Fold title="Saldo al cierre de cada mes">
+            <LineChart
+              label={`Saldo al cierre de cada mes de ${anio}`}
+              n={r.por_mes.length}
+              xEvery={2}
+              xLabel={(i) => mesCorto(r.por_mes[i].mes).slice(0, 3)}
+              xTitle={(i) => mesLabel(r.por_mes[i].mes)}
+              series={[{ id: 'saldo', label: 'Saldo', color: 'var(--fg)', values: r.por_mes.map((m) => m.saldo_cierre), area: true }]}
+            />
+          </Fold>
+
+          <Fold title="Gastos por categoría">
+            {r.por_categoria.length ? (
+              <Donut
+                key={anio}
+                slices={r.por_categoria.map((c, i) => ({ id: String(c.categoria_id), label: c.categoria, value: c.total, color: catColor(i) }))}
+                label={`Gastos de la casa de ${anio} por categoría`}
+              />
+            ) : (
+              <Empty>Sin gastos en {anio}.</Empty>
+            )}
+          </Fold>
+
+          <Fold title="Aportaciones por persona">
+            {totalAport > 0 ? (
+              <>
+                <BarChart label={`Aportaciones por mes y persona de ${anio}`} groups={aportGroups} bars={personas} />
+                <p className="ch-note">
+                  Total {anio}: <strong>{fmtEur(totalAport)}</strong>
+                  {personas.map((p) => ` · ${p.label} ${fmtEur(p.total)} (${Math.round((p.total / totalAport) * 100)} %)`)}
+                </p>
+              </>
+            ) : (
+              <Empty>Sin aportaciones en {anio}.</Empty>
+            )}
+          </Fold>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -303,6 +415,8 @@ export default function Casa() {
           ))
         )}
       </section>
+
+      <CasaCharts refresh={resumen} />
 
       {sheet && <MovSheet tipo={sheet} categorias={cats.filter((c) => c.tipo === sheet)} onClose={() => setSheet(null)} onCreateCat={createCat} onSave={saveMov} />}
       {fijoSheet && <FijoSheet categorias={cats.filter((c) => c.tipo === 'gasto')} onClose={() => setFijoSheet(false)} onCreateCat={createCat} onSave={saveFijo} />}

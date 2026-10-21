@@ -126,7 +126,20 @@ export const getResumen = (desde: string, hasta: string) =>
 
 export type MovimientoCasa = Omit<Movimiento, 'trabajo'> & { usuario: string | null }
 export type GastoFijoCasa = Omit<GastoFijo, 'trabajo'>
-export type ResumenCasa = { saldo_inicial_centimos: number; saldo_actual: number; gasto_medio_mensual: number }
+export type ResumenCasa = {
+  anio: number
+  saldo_inicial_centimos: number
+  saldo_actual: number
+  gasto_medio_mensual: number
+  gasto_anio: number
+  fijos_mensual_total: number
+  meses_colchon: number | null
+  aportacion_sugerida_persona: number
+  por_mes: { mes: string; ingresos: number; gastos: number; saldo_cierre: number }[]
+  por_categoria: { categoria_id: number; categoria: string; total: number }[]
+  aportaciones: { usuario_id: number | null; usuario: string | null; mes: string; total: number }[]
+  aportaciones_anio: { usuario_id: number | null; usuario: string | null; total: number }[]
+}
 
 export const getCasaCategorias = () => request<{ categorias: Categoria[] }>('/casa/categorias')
 
@@ -148,7 +161,7 @@ export const crearCasaGastoFijo = (g: Omit<NuevoGastoFijo, 'trabajo'>) =>
 
 export const quitarCasaGastoFijo = (id: number) => request<unknown>(`/casa/gastos-fijos/${id}/baja`, { method: 'POST' })
 
-export const getCasaResumen = () => request<ResumenCasa>('/casa/resumen')
+export const getCasaResumen = (anio?: string) => request<ResumenCasa>(`/casa/resumen${anio ? `?anio=${anio}` : ''}`)
 
 export const setCasaSaldoInicial = (saldo_inicial_centimos: number) =>
   request<{ saldo_inicial_centimos: number }>('/casa/saldo-inicial', { method: 'PUT', body: JSON.stringify({ saldo_inicial_centimos }) })

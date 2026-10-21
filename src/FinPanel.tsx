@@ -66,7 +66,7 @@ export function Seg<T extends string>({ options, value, onChange }: { options: [
 
 const pct = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v)} %`
 
-function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'good' | 'bad' }) {
+export function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'good' | 'bad' }) {
   return (
     <div className="kpi card">
       <small>{label}</small>
