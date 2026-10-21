@@ -6,7 +6,7 @@ import { daysIn, lastDay, mesCorto, mesLabel, shiftMes, today } from './fechas'
 
 // Paleta pastel de la app (--cat-* de styles.css); a partir de la 9.ª categoría se generan tonos.
 const PALETA = ['proteina', 'verduras', 'frutas', 'limpieza', 'higiene', 'hidratos', 'despensa', 'otro']
-const catColor = (idx: number) => (idx < PALETA.length ? `var(--cat-${PALETA[idx]})` : `hsl(${(idx * 47) % 360} 55% 82%)`)
+export const catColor =(idx: number) => (idx < PALETA.length ? `var(--cat-${PALETA[idx]})` : `hsl(${(idx * 47) % 360} 55% 82%)`)
 
 const C_GASTO = 'var(--gasto)'
 const C_PREV = '#BDBDC4'
@@ -15,7 +15,7 @@ const C_GAS_BAR = '#F29B90'
 
 type Agg = { ing: number; gas: number }
 
-function Fold({ title, children }: { title: string; children: ReactNode }) {
+export function Fold({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(true)
   return (
     <section className="card fold" data-open={open}>
@@ -30,7 +30,7 @@ function Fold({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-const Empty = ({ children }: { children: ReactNode }) => <p className="ch-empty">{children}</p>
+export const Empty =({ children }: { children: ReactNode }) => <p className="ch-empty">{children}</p>
 
 type Opt = { id: number | null; nombre: string; color?: string }
 
@@ -54,7 +54,7 @@ function CatChips({ options, value, onChange, label }: { options: Opt[]; value: 
   )
 }
 
-function Seg<T extends string>({ options, value, onChange }: { options: [T, string][]; value: T; onChange: (v: T) => void }) {
+export function Seg<T extends string>({ options, value, onChange }: { options: [T, string][]; value: T; onChange: (v: T) => void }) {
   return (
     <div className="seg" role="radiogroup">
       {options.map(([v, l]) => (

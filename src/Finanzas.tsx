@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import * as api from './api'
 import type { Categoria, GastoFijo, Movimiento, Tipo } from './api'
-import FinPanel from './FinPanel'
+import FinPanel, { Seg } from './FinPanel'
+import TrabajoPanel from './TrabajoPanel'
 import { lastDay, mesLabel, shiftMes, today } from './fechas'
 
 const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })
@@ -32,6 +33,15 @@ function Confirm({ title, text, action, onClose, onOk }: { title: string; text: 
         <button className="secondary" onClick={onClose}>Cancelar</button>
       </div>
     </div>
+  )
+}
+
+function TrabajoSwitch({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="switch">
+      <input type="checkbox" role="switch" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      Trabajo
+    </label>
   )
 }
 
@@ -105,6 +115,7 @@ function MovSheet({ tipo, categorias, onClose, onCreateCat, onSave }: {
   const [cat, setCat] = useState<number | null>(null)
   const [fecha, setFecha] = useState(today)
   const [nota, setNota] = useState('')
+  const [trabajo, setTrabajo] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -115,7 +126,7 @@ function MovSheet({ tipo, categorias, onClose, onCreateCat, onSave }: {
     if (cat === null) return setError('Elige una categoría')
     setBusy(true)
     try {
-      await onSave({ tipo, importe_centimos: c, categoria_id: cat, fecha, nota: nota.trim() || undefined })
+      await onSave({ tipo, importe_centimos: c, categoria_id: cat, fecha, nota: nota.trim() || undefined, trabajo })
     } catch (e) {
       setError(errMsg(e))
       setBusy(false)
@@ -131,6 +142,7 @@ function MovSheet({ tipo, categorias, onClose, onCreateCat, onSave }: {
         <CatPicker tipo={tipo} categorias={categorias} value={cat} onPick={setCat} onCreate={onCreateCat} />
         <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} aria-label="Fecha" required />
         <input value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Nota (opcional)" maxLength={200} aria-label="Nota" />
+        <TrabajoSwitch value={trabajo} onChange={setTrabajo} />
         {error && <p className="error" role="alert">{error}</p>}
         <button disabled={busy}>Guardar</button>
       </form>
@@ -149,6 +161,7 @@ function FijoSheet({ categorias, mes, onClose, onCreateCat, onSave }: {
   const [importe, setImporte] = useState('')
   const [cat, setCat] = useState<number | null>(null)
   const [dia, setDia] = useState('1')
+  const [trabajo, setTrabajo] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -162,7 +175,7 @@ function FijoSheet({ categorias, mes, onClose, onCreateCat, onSave }: {
     if (!Number.isInteger(d) || d < 1 || d > 28) return setError('El día debe estar entre 1 y 28')
     setBusy(true)
     try {
-      await onSave({ nombre: nombre.trim(), importe_centimos: c, categoria_id: cat, dia: d, mes_inicio: mes })
+      await onSave({ nombre: nombre.trim(), importe_centimos: c, categoria_id: cat, dia: d, mes_inicio: mes, trabajo })
     } catch (e) {
       setError(errMsg(e))
       setBusy(false)
@@ -180,6 +193,7 @@ function FijoSheet({ categorias, mes, onClose, onCreateCat, onSave }: {
           Día del mes (1-28)
           <input type="number" min={1} max={28} value={dia} onChange={(e) => setDia(e.target.value)} inputMode="numeric" />
         </label>
+        <TrabajoSwitch value={trabajo} onChange={setTrabajo} />
         {error && <p className="error" role="alert">{error}</p>}
         <button disabled={busy}>Añadir gasto fijo</button>
       </form>
@@ -199,6 +213,7 @@ export default function Finanzas() {
   const [sheet, setSheet] = useState<Tipo | null>(null)
   const [fijoSheet, setFijoSheet] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
+  const [vista, setVista] = useState<'personal' | 'trabajo'>('personal')
 
   // Descarta respuestas de un mes que ya no es el visible.
   const seq = useRef(0)
@@ -262,68 +277,89 @@ export default function Finanzas() {
   }
 
   const dias: { fecha: string; items: Movimiento[] }[] = []
-  for (const m of movs ?? []) {
+  for (const m of (vista === 'trabajo' ? movs?.filter((x) => x.trabajo === 1) : movs) ?? []) {
     const last = dias[dias.length - 1]
     if (last?.fecha === m.fecha) last.items.push(m)
     else dias.push({ fecha: m.fecha, items: [m] })
   }
   const balance = totales.ingresos - totales.gastos
 
+  const monthNav = (
+    <div className="month-nav">
+      <button className="icon-btn" aria-label="Mes anterior" onClick={() => setMes(shiftMes(mes, -1))}>‹</button>
+      <strong className="month-label" aria-live="polite">{mesLabel(mes)}</strong>
+      <button className="icon-btn" aria-label="Mes siguiente" onClick={() => setMes(shiftMes(mes, 1))}>›</button>
+    </div>
+  )
+  const acciones = (
+    <div className="big-actions">
+      <button className="big gasto-btn" onClick={() => setSheet('gasto')}>+ Gasto</button>
+      <button className="big ingreso-btn" onClick={() => setSheet('ingreso')}>+ Ingreso</button>
+    </div>
+  )
+  const lista = (
+    <section className="section">
+      <h2>Movimientos</h2>
+      {!movs ? (
+        !error && <p className="muted">Cargando…</p>
+      ) : dias.length === 0 ? (
+        <p className="muted">Sin movimientos este mes.</p>
+      ) : (
+        dias.map((d) => (
+          <div key={d.fecha} className="day">
+            <h3>{diaLabel(d.fecha)}</h3>
+            <ul className="items">
+              {d.items.map((m) => (
+                <li key={m.id} className={`item mov ${m.tipo}`}>
+                  <span className="item-text">
+                    <span className="item-name">
+                      {m.gasto_fijo_id !== null && <span className="fijo-icon" role="img" aria-label="Gasto fijo" title="Gasto fijo">↻ </span>}
+                      {m.categoria}
+                      {m.trabajo === 1 && <span className="tag-work">work</span>}
+                    </span>
+                    {m.nota && <small className="item-by">{m.nota}</small>}
+                  </span>
+                  <strong className={`amt ${m.tipo}`}>{m.tipo === 'gasto' ? '−' : '+'}{eur(m.importe_centimos)}</strong>
+                  <button className="icon-btn" aria-label={`Borrar ${m.categoria} ${eur(m.importe_centimos)}`} onClick={() => setPending({ kind: 'mov', m })}>✕</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
+    </section>
+  )
+
   return (
     <>
       <section className="section">
         <h2>Mis finanzas</h2>
-        <div className="month-nav">
-          <button className="icon-btn" aria-label="Mes anterior" onClick={() => setMes(shiftMes(mes, -1))}>‹</button>
-          <strong className="month-label" aria-live="polite">{mesLabel(mes)}</strong>
-          <button className="icon-btn" aria-label="Mes siguiente" onClick={() => setMes(shiftMes(mes, 1))}>›</button>
-        </div>
-        <div className="totals card">
+        <Seg options={[['personal', 'Personal'], ['trabajo', 'Trabajo']]} value={vista} onChange={setVista} />
+        {vista === 'trabajo' && acciones}
+        {vista === 'personal' && monthNav}
+        {vista === 'personal' && <div className="totals card">
           <div><small>Ingresos</small><strong className="ingreso">{eur(totales.ingresos)}</strong></div>
           <div><small>Gastos</small><strong className="gasto">{eur(totales.gastos)}</strong></div>
           <div><small>Balance</small><strong className={balance < 0 ? 'gasto' : 'ingreso'}>{eur(balance)}</strong></div>
-        </div>
-        <div className="big-actions">
-          <button className="big gasto-btn" onClick={() => setSheet('gasto')}>+ Gasto</button>
-          <button className="big ingreso-btn" onClick={() => setSheet('ingreso')}>+ Ingreso</button>
-        </div>
+        </div>}
+        {vista === 'personal' && acciones}
       </section>
 
       {error && <p className="error" role="alert">{error}</p>}
 
-      <FinPanel mes={mes} cats={cats} refresh={movs} />
+      {vista === 'trabajo' ? (
+        <>
+          <TrabajoPanel mes={mes} cats={cats} movsMes={movs} refresh={movs} />
+          <section className="section">{monthNav}</section>
+          {lista}
+        </>
+      ) : (
+        <FinPanel mes={mes} cats={cats} refresh={movs} />
+      )}
 
-      <section className="section">
-        <h2>Movimientos</h2>
-        {!movs ? (
-          !error && <p className="muted">Cargando…</p>
-        ) : dias.length === 0 ? (
-          <p className="muted">Sin movimientos este mes.</p>
-        ) : (
-          dias.map((d) => (
-            <div key={d.fecha} className="day">
-              <h3>{diaLabel(d.fecha)}</h3>
-              <ul className="items">
-                {d.items.map((m) => (
-                  <li key={m.id} className={`item mov ${m.tipo}`}>
-                    <span className="item-text">
-                      <span className="item-name">
-                        {m.gasto_fijo_id !== null && <span className="fijo-icon" role="img" aria-label="Gasto fijo" title="Gasto fijo">↻ </span>}
-                        {m.categoria}
-                      </span>
-                      {m.nota && <small className="item-by">{m.nota}</small>}
-                    </span>
-                    <strong className={`amt ${m.tipo}`}>{m.tipo === 'gasto' ? '−' : '+'}{eur(m.importe_centimos)}</strong>
-                    <button className="icon-btn" aria-label={`Borrar ${m.categoria} ${eur(m.importe_centimos)}`} onClick={() => setPending({ kind: 'mov', m })}>✕</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        )}
-      </section>
+      {vista === 'personal' && lista}
 
-      <section className="section">
+      {vista === 'personal' && <section className="section">
         <div className="section-head">
           <h2>Gastos fijos</h2>
           <button className="shop-go" onClick={() => setFijoSheet(true)}>+ Añadir</button>
@@ -335,7 +371,7 @@ export default function Finanzas() {
             {fijos.map((g) => (
               <li key={g.id} className="item mov gasto">
                 <span className="item-text">
-                  <span className="item-name">{g.nombre}</span>
+                  <span className="item-name">{g.nombre}{g.trabajo === 1 && <span className="tag-work">work</span>}</span>
                   <small className="item-by">{eur(g.importe_centimos)} · día {g.dia} · {g.categoria}</small>
                 </span>
                 <button className="secondary quitar" onClick={() => setPending({ kind: 'fijo', g })}>Quitar</button>
@@ -343,7 +379,7 @@ export default function Finanzas() {
             ))}
           </ul>
         )}
-      </section>
+      </section>}
 
       {sheet && <MovSheet tipo={sheet} categorias={cats.filter((c) => c.tipo === sheet)} onClose={() => setSheet(null)} onCreateCat={createCat} onSave={saveMov} />}
       {fijoSheet && <FijoSheet categorias={cats.filter((c) => c.tipo === 'gasto')} mes={today().slice(0, 7)} onClose={() => setFijoSheet(false)} onCreateCat={createCat} onSave={saveFijo} />}

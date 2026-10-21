@@ -155,7 +155,7 @@ export function LineChart({ series, n, xLabel, xTitle, xEvery, label }: {
 
 // ---------- Barras agrupadas (+ línea opcional) ----------
 
-export type BarGroup = { label: string; title: string; bars: { id: string; value: number }[]; line?: number }
+export type BarGroup = { label: string; title: string; bars: { id: string; value: number; color?: string }[]; line?: number }
 
 export function BarChart({ groups, bars, line, label }: {
   groups: BarGroup[]
@@ -167,7 +167,7 @@ export function BarChart({ groups, bars, line, label }: {
   let max = 0
   let min = 0
   for (const g of groups) {
-    for (const b of g.bars) max = Math.max(max, b.value)
+    for (const b of g.bars) (max = Math.max(max, b.value)), (min = Math.min(min, b.value))
     if (g.line !== undefined) {
       max = Math.max(max, g.line)
       min = Math.min(min, g.line)
@@ -205,7 +205,7 @@ export function BarChart({ groups, bars, line, label }: {
                     width={Math.max(bw - 1, 1)}
                     height={Math.max(h, b.value ? 1 : 0)}
                     rx={2}
-                    style={{ fill: meta?.color, animationDelay: `${i * 30}ms` }}
+                    style={{ fill: b.color ?? meta?.color, animationDelay: `${i * 30}ms` }}
                   />
                 )
               })}

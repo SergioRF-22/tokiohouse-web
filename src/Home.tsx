@@ -48,6 +48,7 @@ const current = () => TABS.find((t) => t.id === location.hash.slice(1)) ?? TABS[
 
 export default function Home({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [tab, setTab] = useState(current)
+  const [confirmOut, setConfirmOut] = useState(false)
 
   useEffect(() => {
     const onHash = () => setTab(current())
@@ -62,11 +63,6 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
 
   return (
     <>
-      <header className="app-header">
-        <span className="greeting">Hola, {user.username}</span>
-        <button className="logout" onClick={out}>Salir</button>
-      </header>
-
       <main className="app-main">
         {tab.id === 'compra' ? (
           <Shopping />
@@ -92,7 +88,21 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
             {t.label}
           </a>
         ))}
+        <button className="tab-logout" aria-label="Salir" title="Salir" onClick={() => setConfirmOut(true)}>
+          {svg(<><path d="M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10" /><path d="M15 8l4 4-4 4" /><path d="M19 12H9.5" /></>)}
+        </button>
       </nav>
+
+      {confirmOut && (
+        <div className="overlay" onClick={() => setConfirmOut(false)}>
+          <div className="dialog card" role="dialog" aria-modal="true" aria-labelledby="out-title" onClick={(e) => e.stopPropagation()}>
+            <h3 id="out-title">Cerrar sesión</h3>
+            <p>¿Seguro que quieres salir?</p>
+            <button className="danger" onClick={out}>Salir</button>
+            <button className="secondary" onClick={() => setConfirmOut(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

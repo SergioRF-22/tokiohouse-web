@@ -76,8 +76,9 @@ export type Movimiento = {
   fecha: string
   nota: string | null
   gasto_fijo_id: number | null
+  trabajo: 0 | 1
 }
-export type NuevoMovimiento = { tipo: Tipo; importe_centimos: number; categoria_id: number; fecha: string; nota?: string }
+export type NuevoMovimiento = { tipo: Tipo; importe_centimos: number; categoria_id: number; fecha: string; nota?: string; trabajo?: boolean }
 export type GastoFijo = {
   id: number
   nombre: string
@@ -86,8 +87,9 @@ export type GastoFijo = {
   categoria: string
   dia: number
   mes_inicio: string
+  trabajo: 0 | 1
 }
-export type NuevoGastoFijo = { nombre: string; importe_centimos: number; categoria_id: number; dia: number; mes_inicio: string }
+export type NuevoGastoFijo = { nombre: string; importe_centimos: number; categoria_id: number; dia: number; mes_inicio: string; trabajo?: boolean }
 export type Resumen = {
   desde: string
   hasta: string
@@ -101,8 +103,8 @@ export const getCategorias = () => request<{ categorias: Categoria[] }>('/finanz
 export const crearCategoria = (tipo: Tipo, nombre: string) =>
   request<Categoria>('/finanzas/categorias', { method: 'POST', body: JSON.stringify({ tipo, nombre }) })
 
-export const getMovimientos = (desde: string, hasta: string) =>
-  request<{ movimientos: Movimiento[] }>(`/finanzas/movimientos?desde=${desde}&hasta=${hasta}`)
+export const getMovimientos = (desde: string, hasta: string, trabajo = false) =>
+  request<{ movimientos: Movimiento[] }>(`/finanzas/movimientos?desde=${desde}&hasta=${hasta}${trabajo ? '&trabajo=1' : ''}`)
 
 export const crearMovimiento = (m: NuevoMovimiento) =>
   request<Movimiento>('/finanzas/movimientos', { method: 'POST', body: JSON.stringify(m) })
