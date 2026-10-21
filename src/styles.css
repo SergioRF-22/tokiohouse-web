@@ -138,3 +138,98 @@ button.secondary { background: var(--surface); color: var(--fg); border-color: v
 .tabbar a svg { width: 1.5rem; height: 1.5rem; }
 .tabbar a[aria-current='page'] { color: var(--accent-strong); }
 .tabbar a[aria-current='page'] svg { background: var(--accent-soft); border-radius: .6rem; padding: .2rem; width: 2.25rem; height: 1.75rem; }
+
+/* Compra */
+.muted { color: var(--muted); }
+.app-main > .section + .section { margin-top: var(--space-4); }
+.app-main > .error { margin-bottom: var(--space-2); }
+.group { display: grid; gap: var(--space-1); }
+.group + .group { margin-top: var(--space-3); }
+.group h3 { margin: 0; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.lista-zone { display: grid; padding: var(--space-1); margin: calc(var(--space-1) * -1); border-radius: var(--radius); border: 2px dashed transparent; min-height: 3rem; }
+.lista-zone.over { border-color: var(--mint-strong); background: color-mix(in srgb, var(--mint) 25%, transparent); }
+
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 var(--space-1) 0 var(--space-3);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.item.dragging { opacity: .5; position: relative; z-index: 5; }
+.item-name { overflow-wrap: anywhere; }
+.icon-btn { flex: none; width: 2.5rem; min-height: 2.5rem; padding: 0; background: transparent; border-color: transparent; color: var(--muted); font-size: 1rem; }
+.icon-btn:active { background: var(--accent-soft); color: var(--accent-strong); }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip {
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--fg);
+  font-weight: 500;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.chip:active { background: var(--accent-soft); }
+.chip.dim { opacity: .4; cursor: default; }
+.chip.dim:active { background: var(--surface); }
+.chip.dragging { opacity: .3; }
+.chip.overlay-chip { display: inline-flex; align-items: center; background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow); }
+.chip.pick.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+
+.fab {
+  position: fixed;
+  z-index: 11;
+  right: calc(var(--space-3) + env(safe-area-inset-right));
+  bottom: calc(var(--tabbar-h) + var(--space-3) + env(safe-area-inset-bottom));
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  line-height: 1;
+  box-shadow: 0 4px 16px rgba(224, 96, 79, .4);
+}
+
+.overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: var(--space-3); background: rgba(43, 43, 46, .4); }
+.dialog { display: grid; gap: var(--space-2); width: 100%; max-width: 22rem; }
+.dialog h3 { margin: 0; font-size: 1.1rem; }
+.dialog p { color: var(--muted); }
+button.danger { background: var(--danger); border-color: var(--danger); }
+.sheet-overlay { place-items: end center; padding: 0; }
+.sheet {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 32rem;
+  padding: var(--space-4) calc(var(--space-3) + env(safe-area-inset-right)) calc(var(--space-3) + env(safe-area-inset-bottom)) calc(var(--space-3) + env(safe-area-inset-left));
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -4px 24px rgba(40, 30, 30, .15);
+  animation: sheet-up .2s ease-out;
+}
+.sheet h3 { margin: 0; font-size: 1.1rem; }
+.check { display: flex; align-items: center; gap: var(--space-2); min-height: var(--tap); }
+.check input { width: 1.4rem; min-height: 1.4rem; height: 1.4rem; padding: 0; accent-color: var(--accent); }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+
+/* Tareas */
+.add-row { display: flex; gap: var(--space-1); }
+.add-row input { flex: 1; min-width: 0; }
+.add-row button { flex: none; width: var(--tap); padding: 0; font-size: 1.5rem; line-height: 1; }
+.item-text { display: grid; gap: .1rem; padding: .5rem 0; min-width: 0; }
+.item-by { font-size: .75rem; color: var(--muted); }

@@ -19,3 +19,33 @@ export const login = (username: string, password: string) =>
 export const logout = () => request<unknown>('/auth/logout', { method: 'POST' })
 
 export const me = () => request<User>('/auth/me')
+
+export type Producto = { id: number; nombre: string; categoria: string; en_bolsa: boolean; posicion: number | null }
+export type Compra = { categorias: string[]; bolsa: Producto[]; lista: Producto[] }
+export type NuevoProducto = { nombre: string; categoria: string; en_lista: boolean; en_bolsa: boolean }
+
+export const getCompra = () => request<Compra>('/shopping')
+
+export const crearProducto = (p: NuevoProducto) =>
+  request<Producto>('/shopping', { method: 'POST', body: JSON.stringify(p) })
+
+export const aLista = (id: number) => request<Producto>(`/shopping/${id}/lista`, { method: 'POST' })
+
+export const quitarDeLista = (id: number) => request<unknown>(`/shopping/${id}/lista`, { method: 'DELETE' })
+
+export const ordenarLista = (ids: number[]) =>
+  request<unknown>('/shopping/lista/orden', { method: 'PUT', body: JSON.stringify({ ids }) })
+
+export const borrarProducto = (id: number) => request<unknown>(`/shopping/${id}`, { method: 'DELETE' })
+
+export type Tarea = { id: number; texto: string; posicion: number; creado_por: string }
+
+export const getTareas = () => request<{ tareas: Tarea[] }>('/tasks')
+
+export const crearTarea = (texto: string) =>
+  request<Tarea>('/tasks', { method: 'POST', body: JSON.stringify({ texto }) })
+
+export const ordenarTareas = (ids: number[]) =>
+  request<unknown>('/tasks/orden', { method: 'PUT', body: JSON.stringify({ ids }) })
+
+export const borrarTarea = (id: number) => request<unknown>(`/tasks/${id}`, { method: 'DELETE' })

@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import * as api from './api'
 import type { User } from './api'
+import Shopping from './Shopping'
+import Tasks from './Tasks'
 
 type Tab = { id: string; label: string; icon: ReactNode; soon: boolean; text: string }
 
@@ -65,13 +67,19 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
       </header>
 
       <main className="app-main">
-        <section className="section">
-          <h2>{tab.label}</h2>
-          <div className="card">
-            {tab.soon ? <span className="badge">Próximamente</span> : null}
-            <p>{tab.text}</p>
-          </div>
-        </section>
+        {tab.id === 'compra' ? (
+          <Shopping />
+        ) : tab.id === 'tareas' ? (
+          <Tasks username={user.username} />
+        ) : (
+          <section className="section">
+            <h2>{tab.label}</h2>
+            <div className="card">
+              {tab.soon ? <span className="badge">Próximamente</span> : null}
+              <p>{tab.text}</p>
+            </div>
+          </section>
+        )}
       </main>
 
       <nav className="tabbar" aria-label="Secciones">
