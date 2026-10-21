@@ -1,22 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import * as api from './api'
 import type { Categoria, GastoFijo, Movimiento, Tipo } from './api'
+import FinPanel from './FinPanel'
+import { lastDay, mesLabel, shiftMes, today } from './fechas'
 
 const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })
 const eur = (centimos: number) => euros.format(centimos / 100)
 
-const pad = (n: number) => String(n).padStart(2, '0')
-const isoDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const today = () => isoDate(new Date())
-const lastDay = (mes: string) => isoDate(new Date(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)), 0))
-const shiftMes = (mes: string, delta: number) => {
-  const d = new Date(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)) - 1 + delta, 1)
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
-}
-const mesLabel = (mes: string) => {
-  const d = new Date(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)) - 1, 1)
-  return `${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(d)} ${d.getFullYear()}`
-}
 const diaLabel = (fecha: string) =>
   new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(Number(fecha.slice(0, 4)), Number(fecha.slice(5, 7)) - 1, Number(fecha.slice(8, 10))),
@@ -301,8 +291,7 @@ export default function Finanzas() {
 
       {error && <p className="error" role="alert">{error}</p>}
 
-      {/* PARTE 2: aquí irá el panel de gráficas (usa GET /finanzas/resumen del mes visible). */}
-      <div className="fin-charts-slot" id="fin-graficas" />
+      <FinPanel mes={mes} cats={cats} refresh={movs} />
 
       <section className="section">
         <h2>Movimientos</h2>
