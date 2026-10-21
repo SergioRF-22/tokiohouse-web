@@ -406,6 +406,7 @@ button.danger { background: var(--danger); border-color: var(--danger); }
 .big { min-height: 3.5rem; font-size: 1.1rem; }
 .big.gasto-btn { background: var(--gasto); border-color: var(--gasto); color: #fff; }
 .big.ingreso-btn { background: var(--ingreso); border-color: var(--ingreso); color: #fff; }
+.big.aportar-btn { grid-column: 1 / -1; }
 .day { display: grid; gap: var(--space-1); }
 .day + .day { margin-top: var(--space-2); }
 .day h3 { margin: 0; font-size: .8rem; color: var(--muted); text-transform: capitalize; }

@@ -150,6 +150,43 @@ function MovSheet({ tipo, categorias, onClose, onCreateCat, onSave }: {
   )
 }
 
+function AportarSheet({ onClose, onSave }: {
+  onClose: () => void
+  onSave: (a: { importe_centimos: number; fecha: string; nota?: string }) => Promise<void>
+}) {
+  const [importe, setImporte] = useState('')
+  const [fecha, setFecha] = useState(today)
+  const [nota, setNota] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    const c = parseImporte(importe)
+    if (c === null) return setError('Importe no válido (ej. 12,50)')
+    setBusy(true)
+    try {
+      await onSave({ importe_centimos: c, fecha, nota: nota.trim() || undefined })
+    } catch (e) {
+      setError(errMsg(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="overlay sheet-overlay" onClick={onClose}>
+      <form className="sheet" onSubmit={submit} onClick={(e) => e.stopPropagation()} aria-label="Aportar a casa">
+        <h3>Aportar a casa</h3>
+        <input className="amount" value={importe} onChange={(e) => setImporte(e.target.value)} inputMode="decimal" placeholder="0,00 €" aria-label="Importe" autoFocus />
+        <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} aria-label="Fecha" required />
+        <input value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Nota (opcional)" maxLength={200} aria-label="Nota" />
+        {error && <p className="error" role="alert">{error}</p>}
+        <button disabled={busy}>Guardar</button>
+      </form>
+    </div>
+  )
+}
+
 function FijoSheet({ categorias, mes, onClose, onCreateCat, onSave }: {
   categorias: Categoria[]
   mes: string
@@ -212,6 +249,7 @@ export default function Finanzas() {
   const [error, setError] = useState('')
   const [sheet, setSheet] = useState<Tipo | null>(null)
   const [fijoSheet, setFijoSheet] = useState(false)
+  const [aportarSheet, setAportarSheet] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
   const [vista, setVista] = useState<'personal' | 'trabajo'>('personal')
 
@@ -257,6 +295,14 @@ export default function Finanzas() {
     else setMes(destino)
   }
 
+  async function saveAportar(a: { importe_centimos: number; fecha: string; nota?: string }) {
+    await api.aportarCasa(a)
+    setAportarSheet(false)
+    const destino = a.fecha.slice(0, 7)
+    if (destino === mes) await load()
+    else setMes(destino)
+  }
+
   async function saveFijo(g: api.NuevoGastoFijo) {
     await api.crearGastoFijo(g)
     setFijoSheet(false)
@@ -295,6 +341,7 @@ export default function Finanzas() {
     <div className="big-actions">
       <button className="big gasto-btn" onClick={() => setSheet('gasto')}>+ Gasto</button>
       <button className="big ingreso-btn" onClick={() => setSheet('ingreso')}>+ Ingreso</button>
+      {vista === 'personal' && <button className="big secondary aportar-btn" onClick={() => setAportarSheet(true)}>Aportar a casa</button>}
     </div>
   )
   const lista = (
@@ -316,6 +363,7 @@ export default function Finanzas() {
                       {m.gasto_fijo_id !== null && <span className="fijo-icon" role="img" aria-label="Gasto fijo" title="Gasto fijo">↻ </span>}
                       {m.categoria}
                       {m.trabajo === 1 && <span className="tag-work">work</span>}
+                      {m.tipo === 'gasto' && m.categoria === 'Casa' && <span className="tag-work">casa</span>}
                     </span>
                     {m.nota && <small className="item-by">{m.nota}</small>}
                   </span>
@@ -382,6 +430,7 @@ export default function Finanzas() {
       </section>}
 
       {sheet && <MovSheet tipo={sheet} categorias={cats.filter((c) => c.tipo === sheet)} onClose={() => setSheet(null)} onCreateCat={createCat} onSave={saveMov} />}
+      {aportarSheet && <AportarSheet onClose={() => setAportarSheet(false)} onSave={saveAportar} />}
       {fijoSheet && <FijoSheet categorias={cats.filter((c) => c.tipo === 'gasto')} mes={today().slice(0, 7)} onClose={() => setFijoSheet(false)} onCreateCat={createCat} onSave={saveFijo} />}
       {pending?.kind === 'mov' && (
         <Confirm

@@ -109,7 +109,10 @@ export const getMovimientos = (desde: string, hasta: string, trabajo = false) =>
 export const crearMovimiento = (m: NuevoMovimiento) =>
   request<Movimiento>('/finanzas/movimientos', { method: 'POST', body: JSON.stringify(m) })
 
-export const borrarMovimiento = (id: number) => request<unknown>(`/finanzas/movimientos/${id}`, { method: 'DELETE' })
+export const aportarCasa = (a: { importe_centimos: number; fecha: string; nota?: string }) =>
+  request<unknown>('/finanzas/aportar-casa', { method: 'POST', body: JSON.stringify(a) })
+
+export const borrarMovimiento =(id: number) => request<unknown>(`/finanzas/movimientos/${id}`, { method: 'DELETE' })
 
 export const getGastosFijos = () => request<{ gastos_fijos: GastoFijo[] }>('/finanzas/gastos-fijos')
 
