@@ -91,7 +91,7 @@ export default function Home({ user, onLogout }: { user: User; onLogout: () => v
             {t.label}
           </a>
         ))}
-        <button className="tab-logout" aria-label="Salir" title="Salir" onClick={() => setConfirmOut(true)}>
+        <button className="tab-logout" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => setConfirmOut(true)}>
           {svg(<><path d="M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10" /><path d="M15 8l4 4-4 4" /><path d="M19 12H9.5" /></>)}
         </button>
       </nav>

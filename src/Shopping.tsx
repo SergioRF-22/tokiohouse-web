@@ -61,7 +61,7 @@ function Card({ p, onRemove }: { p: Producto; onRemove: (p: Producto) => void })
       {...listeners}
     >
       <span className="item-name">{p.nombre}</span>
-      <button className="icon-btn" aria-label={`Quitar ${p.nombre}`} onClick={() => onRemove(p)}>
+      <button className="icon-btn quiet" aria-label={`Quitar ${p.nombre}`} onClick={() => onRemove(p)}>
         ✕
       </button>
     </li>
@@ -113,7 +113,7 @@ function ShopMode({ groups, total, done, onToggle, onExit, onFinish }: {
     <div className="shop-mode">
       <header className="shop-top">
         <strong className="shop-progress" aria-live="polite">{done}/{total}</strong>
-        <button className="secondary" onClick={onExit}>Salir</button>
+        <button className="secondary" onClick={onExit}>Terminar</button>
       </header>
       <div className="shop-body">
         {groups.length === 0 && <p className="muted">La lista está vacía.</p>}

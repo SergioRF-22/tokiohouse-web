@@ -29,7 +29,7 @@ function scale(min: number, max: number, count = 4) {
 
 const W = 340
 const H = 200
-const PAD = { l: 34, r: 10, t: 12, b: 24 }
+const PAD = { l: 42, r: 10, t: 12, b: 24 }
 const IW = W - PAD.l - PAD.r
 const IH = H - PAD.t - PAD.b
 

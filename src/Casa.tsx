@@ -343,6 +343,7 @@ export default function Casa() {
           <div className="work-kpi card">
             <small>Saldo actual</small>
             <strong className={resumen && resumen.saldo_actual < 0 ? 'gasto' : undefined}>{resumen ? eur(resumen.saldo_actual) : '—'}</strong>
+            {resumen && <span className="saldo-note">Incluye saldo inicial de {eur(resumen.saldo_inicial_centimos)}</span>}
           </div>
           <div className="work-kpi card">
             <small>Gasto medio mensual</small>
