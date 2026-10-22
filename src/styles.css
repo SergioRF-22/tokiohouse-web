@@ -419,7 +419,8 @@ button.danger { background: var(--danger); border-color: var(--danger); }
 .chip.new { border-style: dashed; color: var(--muted); }
 .sheet { max-height: 92dvh; overflow-y: auto; overflow-x: hidden; }
 .sheet input, .sheet > button, .sheet .big-actions button { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
-.sheet .check input, .sheet .switch input { width: auto; }
+.sheet .check input { width: auto; }
+.sheet .switch input { width: 2.75rem; }
 .sheet input.amount { font-size: 1.5rem; font-weight: 600; }
 .field { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted); }
 
